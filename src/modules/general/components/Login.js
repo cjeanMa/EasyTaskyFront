@@ -1,4 +1,5 @@
 import React from 'react';
+import {useContext} from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -14,7 +15,8 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import CopyrightForm from './CopyrightForm';
-import { getLogin } from '../../../services/general/UserService';
+import { getLogin } from '../../../services/UserService';
+import AuthContext from '../../../context/auth/authContext';
 
 function Copyright() {
   return (
@@ -53,12 +55,14 @@ const useStyles = makeStyles((theme) => ({
 export default function Login() {
   const classes = useStyles();
 
+  const context = useContext(AuthContext);
+
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [respuesta, setRespuesta] = React.useState([]);
 
   React.useEffect(() => {
-    insertDataSession();
+    
   }, [])
 
   const handleSubmit = (event) => {
@@ -68,22 +72,15 @@ export default function Login() {
       .then(rpta => {
         if (rpta.success){
           console.log(rpta);
-          localStorage.setItem('session', JSON.stringify(rpta));
-          setRespuesta(rpta);}
+          context.iniciarSesionState(rpta);
+          setRespuesta(rpta);
+          window.location.pathname = '/user';
+        }
         else {
           console.log("No funciona")
         }
       }
       );
-  }
-
-  const insertDataSession = () => {
-    if (respuesta.success) {
-      console.log(JSON.stringify(respuesta));
-      localStorage.set('session', JSON.stringify(respuesta));
-    }
-    else
-      setRespuesta({});
   }
 
   const handleChangeUsername = (event) => {

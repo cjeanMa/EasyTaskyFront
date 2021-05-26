@@ -16,7 +16,6 @@ import HeaderUser from '../components/HeaderUser';
 import { Route, Switch } from 'react-router';
 import ListTaskUser from '../components/ListTaskUser';
 import ListEventUser from '../components/ListEventUser';
-import { getUsers } from '../../../services/general/UserService';
 
 const drawerWidth = 240;
 
@@ -33,13 +32,6 @@ const useStyles = makeStyles((theme) => ({
 const MainUserScreen = () => {
 
     const [user, setUser] = React.useState([]);
-
-    React.useEffect(()=>{
-        getUsers().then(rpta => {
-            console.log(rpta);
-            setUser(rpta);
-        })
-    }, [])
 
     const classes = useStyles();
 

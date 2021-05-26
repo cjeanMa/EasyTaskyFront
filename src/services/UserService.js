@@ -1,4 +1,4 @@
-import {END_POINT} from "../../enviroment/Enviroment"
+import {END_POINT} from "../enviroment/Enviroment"
 
 export const getUsers = async () => {
     const response = await fetch(`${END_POINT}users`);

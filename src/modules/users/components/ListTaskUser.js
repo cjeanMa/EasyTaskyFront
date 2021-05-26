@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useContext } from 'react'
 import { makeStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
@@ -8,45 +8,41 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
+import AuthContext from '../../../context/auth/authContext';
+import { getTasksByUser } from '../../../services/TaskService';
+import { Icon } from '@material-ui/core';
+import { Button } from '@material-ui/core';
+import CreateIcon from '@material-ui/icons/Create';
+import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
+import VisibilityIcon from '@material-ui/icons/Visibility';
+import FormTaksUser from './FormTasksUser';
 
 const columns = [
-  { id: 'name', label: 'Name', minWidth: 170 },
-  { id: 'code', label: 'ISO\u00a0Code', minWidth: 100 },
+  { label: 'Num', minWidth: 100 },
+  { label: 'TAREA', minWidth: 170 },
   {
-    id: 'population',
-    label: 'Population',
+    label: 'DESCRIPCION',
     minWidth: 170,
     align: 'right',
     format: (value) => value.toLocaleString('en-US'),
   },
   {
-    id: 'size',
-    label: 'Size\u00a0(km\u00b2)',
-    minWidth: 170,
+    label: 'FECHA DE CREACION',
+    minWidth: 150,
     align: 'right',
     format: (value) => value.toLocaleString('en-US'),
   },
   {
-    id: 'density',
-    label: 'Density',
+    label: 'CATEGORIA',
     minWidth: 170,
     align: 'right',
     format: (value) => value.toFixed(2),
   },
-];
-
-function createData(name, code, population, size) {
-  const density = population / size;
-  return { name, code, population, size, density };
-}
-
-const rows = [
-  createData('India', 'IN', 1324171354, 3287263),
-  createData('China', 'CN', 1403500365, 9596961),
-  createData('Italy', 'IT', 60483973, 301340),
-  createData('United States', 'US', 327167434, 9833520),
-  createData('Canada', 'CA', 37602103, 9984670),
-  createData('Australia', 'AU', 25475400, 7692024),
+  {
+    label: 'ACCIONES',
+    minWidth: 170,
+    align: "center",
+  },
 ];
 
 const useStyles = makeStyles({
@@ -60,20 +56,38 @@ const useStyles = makeStyles({
 
 
 const ListTaskUser = () => {
-    const classes = useStyles();
-    const [page, setPage] = React.useState(0);
-    const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  
-    const handleChangePage = (event, newPage) => {
-      setPage(newPage);
-    };
-  
-    const handleChangeRowsPerPage = (event) => {
-      setRowsPerPage(+event.target.value);
-      setPage(0);
-    };
-  
-    return (
+  const classes = useStyles();
+  const [page, setPage] = React.useState(0);
+  const [tasksPerPage, setTasksPerPage] = React.useState(10);
+  const [idUser, setIdUser] = React.useState([]);
+
+  const [tasks, setTasks] = React.useState([]);
+
+  const context = useContext(AuthContext);
+
+  let contador = 1;
+
+  //para setear el valor de idUser
+  useEffect(() => {
+    console.log(context.getUserLogued());
+    setIdUser(context.getUserLogued().data)
+    getTasksByUser(context.getUserLogued().data.id)
+      .then(rpta => setTasks(rpta));
+  }, [])
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeTasksPerPage = (event) => {
+    setTasksPerPage(+event.target.value);
+    setPage(0);
+  };
+
+  return (
+    <div>
+      <FormTaksUser idUser = {context.getUserLogued().data.id} />
+
       <Paper className={classes.root}>
         <TableContainer className={classes.container}>
           <Table stickyHeader aria-label="sticky table">
@@ -82,7 +96,7 @@ const ListTaskUser = () => {
                 {columns.map((column) => (
                   <TableCell
                     key={column.id}
-                    align={column.align}
+                    align="center"
                     style={{ minWidth: column.minWidth }}
                   >
                     {column.label}
@@ -91,17 +105,29 @@ const ListTaskUser = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+              {tasks.slice(page * tasksPerPage, page * tasksPerPage + tasksPerPage).map((task) => {
+
                 return (
-                  <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                    {columns.map((column) => {
-                      const value = row[column.id];
-                      return (
-                        <TableCell key={column.id} align={column.align}>
-                          {column.format && typeof value === 'number' ? column.format(value) : value}
-                        </TableCell>
-                      );
-                    })}
+                  <TableRow hover role="checkbox" tabIndex={-1} key={task.id}>
+                    <TableCell align="center">
+                      {contador++}
+                    </TableCell>
+                    <TableCell>
+                      {task.title_task}
+                    </TableCell>
+                    <TableCell>
+                      {task.description_task}
+                    </TableCell>
+                    <TableCell align="center">
+                      {task.created_at}
+                    </TableCell>
+                    <TableCell align="center">
+                      {task.taskCategory}
+                    </TableCell>
+                    <TableCell align="center">
+                      <CreateIcon color="action"></CreateIcon>
+                      <DeleteOutlineIcon color="error"></DeleteOutlineIcon>
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -109,16 +135,17 @@ const ListTaskUser = () => {
           </Table>
         </TableContainer>
         <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
+          rowsPerPageOptions={[5, 10, 50]}
           component="div"
-          count={rows.length}
-          rowsPerPage={rowsPerPage}
+          count={tasks.length}
+          rowsPerPage={tasksPerPage}
           page={page}
           onChangePage={handleChangePage}
-          onChangeRowsPerPage={handleChangeRowsPerPage}
+          onChangeRowsPerPage={handleChangeTasksPerPage}
         />
       </Paper>
-    );
+    </div>
+  );
 }
 
 export default ListTaskUser

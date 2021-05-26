@@ -1,4 +1,5 @@
-import React from 'react'
+import React from 'react';
+import { useEffect, useContext } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
@@ -8,79 +9,72 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
+import AuthContext from '../../../context/auth/authContext';
+import { getTasksByUser } from '../../../services/TaskService';
+import { getEventsByUser } from '../../../services/EventService';
+import CreateIcon from '@material-ui/icons/Create';
+import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
+import VisibilityIcon from '@material-ui/icons/Visibility';
 
 
 const columns = [
-    { id: 'evento', label: 'Evento', minWidth: 170 },
-    { id: 'code', label: 'ISO\u00a0Code', minWidth: 100 },
-    {
-      id: 'population',
-      label: 'Population',
-      minWidth: 170,
-      align: 'right',
+    { label: 'NUM', minWidth: 30 },
+    { label: 'EVENTO', minWidth: 100 },
+    { label: 'DESCRIPCION', minWidth: 150, },
+    { label: 'LUGAR', minWidth: 40, },
+    { label: 'FECHA DE EVENTO', minWidth: 40, },
+    { label: 'CATEGORIA', minWidth: 50, },
+    { label: 'ACCIONES', minWidth: 50, },
+];
 
-    },
-    {
-      id: 'size',
-      label: 'Size\u00a0(km\u00b2)',
-      minWidth: 170,
-      align: 'right',
-    },
-    {
-      id: 'density',
-      label: 'Density',
-      minWidth: 170,
-      align: 'right',
-      format: (value) => value.toFixed(2),
-    },
-  ];
-  
-  function createData(evento, code, population, size) {
-    const density = population / size;
-    return { evento, code, population, size, density };
-  }
-  
-  const rows = [
-    createData('India', 'IN', 1324171354, 3287263),
-    createData('China', 'CN', 1403500365, 9596961),
-    createData('Italy', 'IT', 60483973, 301340),
-    createData('United States', 'US', 327167434, 9833520),
-    createData('Canada', 'CA', 37602103, 9984670),
-  ];
-  
-  const useStyles = makeStyles({
+const useStyles = makeStyles({
     root: {
-      width: '100%',
+        width: '100%',
     },
     container: {
-      maxHeight: 700,
+        maxHeight: '90%',
     },
-  });
+});
 
 const ListEventUser = () => {
     const classes = useStyles();
     const [page, setPage] = React.useState(0);
-    const [rowsPerPage, setRowsPerPage] = React.useState(10);
+    const [eventsPerPage, setEventsPerPage] = React.useState(10);
+
+    const [events, setEvents] = React.useState([]);
+
+    const context = useContext(AuthContext);
+
+    let contador = 1;
+
+    useEffect(() => {
+        getEventsByUser(context.getUserLogued().data.id)
+            .then(rpta => setEvents(rpta))
+        //getTasksByUser(context)
+    }, [])
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
 
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(+event.target.value);
+    const handleChangeEventsPerPage = (event) => {
+        setEventsPerPage(+event.target.value);
         setPage(0);
     };
 
+    const showEvents = () => {
+        console.log(events);
+    }
     return (
         <Paper className={classes.root}>
             <TableContainer className={classes.container}>
                 <Table stickyHeader aria-label="sticky table">
                     <TableHead>
                         <TableRow>
+                            {console.log(events)}
                             {columns.map((column) => (
                                 <TableCell
-                                    key={column.id}
-                                    align={column.align}
+                                    align="center"
                                     style={{ minWidth: column.minWidth }}
                                 >
                                     {column.label}
@@ -89,17 +83,33 @@ const ListEventUser = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+                        {events.slice(page * eventsPerPage, page * eventsPerPage + eventsPerPage).map((event) => {
                             return (
-                                <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                                    {columns.map((column) => {
-                                        const value = row[column.id];
-                                        return (
-                                            <TableCell key={column.id} align={column.align}>
-                                                {column.format && typeof value === 'number' ? column.format(value) : value}
-                                            </TableCell>
-                                        );
-                                    })}
+                                <TableRow hover role="checkbox" tabIndex={-1} key={event.id}>
+
+                                    <TableCell align = "center">
+                                        {contador++}
+                                    </TableCell>
+                                    <TableCell>
+                                        {event.title_event}
+                                    </TableCell>
+                                    <TableCell>
+                                        {event.description_event}
+                                    </TableCell>
+                                    <TableCell align = "center">
+                                        {event.place_event}
+                                    </TableCell>
+                                    <TableCell align = "center">
+                                        {event.date_event}
+                                    </TableCell>
+                                    <TableCell align = "center">
+                                        {event.eventCategory.title_event_category}
+                                    </TableCell>
+                                    <TableCell align = "center">
+                                        <VisibilityIcon color="primary" onClick={showEvents}></VisibilityIcon>
+                                        <CreateIcon color="action"></CreateIcon>
+                                        <DeleteOutlineIcon color="error"></DeleteOutlineIcon>
+                                    </TableCell>
                                 </TableRow>
                             );
                         })}
@@ -109,11 +119,11 @@ const ListEventUser = () => {
             <TablePagination
                 rowsPerPageOptions={[10, 25, 100]}
                 component="div"
-                count={rows.length}
-                rowsPerPage={rowsPerPage}
+                count={events.length}
+                rowsPerPage={eventsPerPage}
                 page={page}
                 onChangePage={handleChangePage}
-                onChangeRowsPerPage={handleChangeRowsPerPage}
+                onChangeEventPerPage={handleChangeEventsPerPage}
             />
         </Paper>
     );

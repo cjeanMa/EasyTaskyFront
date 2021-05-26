@@ -1,8 +1,12 @@
+
+import AuthState from './context/auth/AuthState';
 import SuperRouter from './routers/SuperRouter';
 
 function App() {
   return (
-    <SuperRouter></SuperRouter>
+    <AuthState>
+      <SuperRouter></SuperRouter>
+    </AuthState>
   );
 }
 
