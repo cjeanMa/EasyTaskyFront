@@ -9,40 +9,23 @@ import TableHead from '@material-ui/core/TableHead';
 import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
 import AuthContext from '../../../context/auth/authContext';
-import { getTasksByUser } from '../../../services/TaskService';
+import { getTasksByUser, deleteTaskByUser } from '../../../services/TaskService';
 import { Icon } from '@material-ui/core';
 import { Button } from '@material-ui/core';
 import CreateIcon from '@material-ui/icons/Create';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import FormTaksUser from './FormTasksUser';
+import { confirmAlert } from 'react-confirm-alert'; // Import
+import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
+import { red } from '@material-ui/core/colors';
 
 const columns = [
   { label: 'Num', minWidth: 100 },
   { label: 'TAREA', minWidth: 170 },
-  {
-    label: 'DESCRIPCION',
-    minWidth: 170,
-    align: 'right',
-    format: (value) => value.toLocaleString('en-US'),
-  },
-  {
-    label: 'FECHA DE CREACION',
-    minWidth: 150,
-    align: 'right',
-    format: (value) => value.toLocaleString('en-US'),
-  },
-  {
-    label: 'CATEGORIA',
-    minWidth: 170,
-    align: 'right',
-    format: (value) => value.toFixed(2),
-  },
-  {
-    label: 'ACCIONES',
-    minWidth: 170,
-    align: "center",
-  },
+  {label: 'DESCRIPCION', minWidth: 170,align: 'right'},
+  {label: 'FECHA DE CREACION', minWidth: 150,align: 'right'  },
+  {label: 'ACCIONES',minWidth: 170,align: "center"},
 ];
 
 const useStyles = makeStyles({
@@ -59,9 +42,12 @@ const ListTaskUser = () => {
   const classes = useStyles();
   const [page, setPage] = React.useState(0);
   const [tasksPerPage, setTasksPerPage] = React.useState(10);
-  const [idUser, setIdUser] = React.useState([]);
 
+  const [idUser, setIdUser] = React.useState([]);
+  const [taskUpdate, setTaskUpdate] = React.useState({});
   const [tasks, setTasks] = React.useState([]);
+  const [actionTask, setActionTask] = React.useState("create");
+  const [hideForm, setHideForm] = React.useState(true);
 
   const context = useContext(AuthContext);
 
@@ -69,11 +55,14 @@ const ListTaskUser = () => {
 
   //para setear el valor de idUser
   useEffect(() => {
-    console.log(context.getUserLogued());
-    setIdUser(context.getUserLogued().data)
     getTasksByUser(context.getUserLogued().data.id)
       .then(rpta => setTasks(rpta));
   }, [])
+
+  const refreshListTasks = () => {
+    getTasksByUser(context.getUserLogued().data.id)
+      .then(rpta => setTasks(rpta));
+  }
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -84,11 +73,61 @@ const ListTaskUser = () => {
     setPage(0);
   };
 
+  const buttonCreateTask = () => {
+    setHideForm(false);
+    setActionTask("create");
+    setTaskUpdate({});
+  }
+
+  const closeFormTask = () => {
+    setHideForm(true);
+    setTaskUpdate(null);
+  }
+
+  const showUpdateData = (task) => {
+    setHideForm(false);
+    setActionTask("update")
+    setTaskUpdate(task)
+  }
+
+  const deleteTask = (idTask) => {
+    confirmAlert({
+      title: 'Eliminar Tarea',
+      message: 'Realmente quieres borrar esta tarea?',
+      buttons: [
+        {
+          label: 'Si',
+          onClick: () => {
+            deleteTaskByUser(idTask)
+              .then(rpta => {
+                refreshListTasks();
+              }
+              )
+          }
+        },
+        {
+          label: 'No',
+        }
+      ]
+    });
+  }
+
   return (
     <div>
-      <FormTaksUser idUser = {context.getUserLogued().data.id} />
+      <div hidden={hideForm}>
+        <FormTaksUser
+          idUser={context.getUserLogued().data.id}
+          action={actionTask}
+          closeForm={closeFormTask}
+          dataTask={taskUpdate}
+          refreshData={() => refreshListTasks()}
+        />
+      </div>
 
       <Paper className={classes.root}>
+        <Button variant="contained" color="primary" margin={3} onClick={buttonCreateTask}>
+          Agregar Tarea
+        </Button>
         <TableContainer className={classes.container}>
           <Table stickyHeader aria-label="sticky table">
             <TableHead>
@@ -105,28 +144,29 @@ const ListTaskUser = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {tasks.slice(page * tasksPerPage, page * tasksPerPage + tasksPerPage).map((task) => {
+              {tasks.slice(page * tasksPerPage, page * tasksPerPage + tasksPerPage).map((oneTask) => {
 
                 return (
-                  <TableRow hover role="checkbox" tabIndex={-1} key={task.id}>
+                  <TableRow hover role="checkbox" tabIndex={-1} key={oneTask.id}>
                     <TableCell align="center">
                       {contador++}
                     </TableCell>
                     <TableCell>
-                      {task.title_task}
+                      {oneTask.title_task}
                     </TableCell>
                     <TableCell>
-                      {task.description_task}
+                      {oneTask.description_task}
                     </TableCell>
                     <TableCell align="center">
-                      {task.created_at}
+                      {oneTask.created_at}
                     </TableCell>
                     <TableCell align="center">
-                      {task.taskCategory}
-                    </TableCell>
-                    <TableCell align="center">
-                      <CreateIcon color="action"></CreateIcon>
-                      <DeleteOutlineIcon color="error"></DeleteOutlineIcon>
+                      <button border={0} id={oneTask.id} onClick={() => showUpdateData(oneTask)}>
+                        <CreateIcon color="error" ></CreateIcon>
+                      </button>
+                      <button onClick={() => deleteTask(oneTask.id)}>
+                        <DeleteOutlineIcon color="secondary"></DeleteOutlineIcon>
+                      </button>
                     </TableCell>
                   </TableRow>
                 );

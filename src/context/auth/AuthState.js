@@ -14,6 +14,7 @@ const AuthState = (props) => {
     const cerrarSesion = () => {
         localStorage.removeItem("sesion");
         setLogeado(false);
+        window.location.pathname = "/";
     }
 
     const getUserLogued = () => {

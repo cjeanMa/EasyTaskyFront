@@ -25,3 +25,18 @@ export const getLogin = async(username, password) =>{
     const data = await response.json();
     return data;
 }
+
+export const addUser = async (dataUser) =>{
+    const response = await fetch(`${END_POINT}users/`, 
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(dataUser)
+        }
+    );
+    const data = await response.json();
+    return data
+
+}

@@ -1,5 +1,4 @@
-import React from 'react';
-import { useEffect, useContext } from 'react';
+import React, { useEffect, useContext } from 'react'
 import { makeStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
@@ -10,11 +9,16 @@ import TableHead from '@material-ui/core/TableHead';
 import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
 import AuthContext from '../../../context/auth/authContext';
-import { getTasksByUser } from '../../../services/TaskService';
-import { getEventsByUser } from '../../../services/EventService';
+import { getEventsByUser, deleteEventByUser } from '../../../services/EventService';
+import { Icon } from '@material-ui/core';
+import { Button } from '@material-ui/core';
 import CreateIcon from '@material-ui/icons/Create';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import VisibilityIcon from '@material-ui/icons/Visibility';
+import { confirmAlert } from 'react-confirm-alert'; // Import
+import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
+import { red } from '@material-ui/core/colors';
+import FormEventUser from './FormEventUser';
 
 
 const columns = [
@@ -23,7 +27,6 @@ const columns = [
     { label: 'DESCRIPCION', minWidth: 150, },
     { label: 'LUGAR', minWidth: 40, },
     { label: 'FECHA DE EVENTO', minWidth: 40, },
-    { label: 'CATEGORIA', minWidth: 50, },
     { label: 'ACCIONES', minWidth: 50, },
 ];
 
@@ -41,7 +44,10 @@ const ListEventUser = () => {
     const [page, setPage] = React.useState(0);
     const [eventsPerPage, setEventsPerPage] = React.useState(10);
 
+    const [eventUpdate, setEventUpdate] = React.useState({});
     const [events, setEvents] = React.useState([]);
+    const [actionEvent, setActionEvent] = React.useState("create");
+    const [hideForm, setHideForm] = React.useState(true);
 
     const context = useContext(AuthContext);
 
@@ -53,6 +59,11 @@ const ListEventUser = () => {
         //getTasksByUser(context)
     }, [])
 
+    const refreshListEvents = () => {
+        getEventsByUser(context.getUserLogued().data.id)
+            .then(rpta => setEvents(rpta));
+    }
+
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
@@ -62,70 +73,119 @@ const ListEventUser = () => {
         setPage(0);
     };
 
-    const showEvents = () => {
-        console.log(events);
+    const buttonCreateEvent = () => {
+        setHideForm(false);
+        setActionEvent("create");
+        setEventUpdate({});
     }
-    return (
-        <Paper className={classes.root}>
-            <TableContainer className={classes.container}>
-                <Table stickyHeader aria-label="sticky table">
-                    <TableHead>
-                        <TableRow>
-                            {console.log(events)}
-                            {columns.map((column) => (
-                                <TableCell
-                                    align="center"
-                                    style={{ minWidth: column.minWidth }}
-                                >
-                                    {column.label}
-                                </TableCell>
-                            ))}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {events.slice(page * eventsPerPage, page * eventsPerPage + eventsPerPage).map((event) => {
-                            return (
-                                <TableRow hover role="checkbox" tabIndex={-1} key={event.id}>
 
-                                    <TableCell align = "center">
-                                        {contador++}
+    const closeFormEvent = () => {
+        setHideForm(true);
+        setEventUpdate(null);
+    }
+
+    const showUpdateData = (event) => {
+        setHideForm(false);
+        setActionEvent("update")
+        setEventUpdate(event)
+    }
+
+    const deleteEvent = (idEvent) => {
+        confirmAlert({
+            title: 'Eliminar Evento',
+            message: 'Realmente quieres borrar este evento?',
+            buttons: [
+                {
+                    label: 'Si',
+                    onClick: () => {
+                        deleteEventByUser(idEvent)
+                            .then(rpta => {
+                                refreshListEvents();
+                            }
+                            )
+                    }
+                },
+                {
+                    label: 'No',
+                }
+            ]
+        });
+    }
+
+    return (
+        <div>
+            <div hidden={hideForm}>
+                <FormEventUser
+                    idUser={context.getUserLogued().data.id}
+                    action={actionEvent}
+                    closeForm={closeFormEvent}
+                    dataEvent={eventUpdate}
+                    refreshData={() => refreshListEvents()}
+                />
+            </div>
+            <Paper className={classes.root}>
+                <Button variant="contained" color="primary" onClick={buttonCreateEvent}>
+                    Agregar Evento
+                </Button>
+                <TableContainer className={classes.container}>
+                    <Table stickyHeader aria-label="sticky table">
+                        <TableHead>
+                            <TableRow>
+                                {columns.map((column) => (
+                                    <TableCell
+                                        align="center"
+                                        style={{ minWidth: column.minWidth }}
+                                    >
+                                        {column.label}
                                     </TableCell>
-                                    <TableCell>
-                                        {event.title_event}
-                                    </TableCell>
-                                    <TableCell>
-                                        {event.description_event}
-                                    </TableCell>
-                                    <TableCell align = "center">
-                                        {event.place_event}
-                                    </TableCell>
-                                    <TableCell align = "center">
-                                        {event.date_event}
-                                    </TableCell>
-                                    <TableCell align = "center">
-                                        {event.eventCategory.title_event_category}
-                                    </TableCell>
-                                    <TableCell align = "center">
-                                        <VisibilityIcon color="primary" onClick={showEvents}></VisibilityIcon>
-                                        <CreateIcon color="action"></CreateIcon>
-                                        <DeleteOutlineIcon color="error"></DeleteOutlineIcon>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-            <TablePagination
-                rowsPerPageOptions={[10, 25, 100]}
-                component="div"
-                count={events.length}
-                rowsPerPage={eventsPerPage}
-                page={page}
-                onChangePage={handleChangePage}
-                onChangeEventPerPage={handleChangeEventsPerPage}
-            />
-        </Paper>
+                                ))}
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {events.slice(page * eventsPerPage, page * eventsPerPage + eventsPerPage).map((event) => {
+                                return (
+                                    <TableRow hover role="checkbox" tabIndex={-1} key={event.id}>
+
+                                        <TableCell align="center">
+                                            {contador++}
+                                        </TableCell>
+                                        <TableCell>
+                                            {event.title_event}
+                                        </TableCell>
+                                        <TableCell>
+                                            {event.description_event}
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            {event.place_event}
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            {event.date_event}
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            <button border={0} id={event.id} onClick={() => showUpdateData(event)}>
+                                            <CreateIcon color="error"></CreateIcon>
+                                            </button>
+                                            <button onClick={() => deleteEvent(event.id)}>
+                                            <DeleteOutlineIcon color="secondary"></DeleteOutlineIcon>
+                                            </button>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+                <TablePagination
+                    rowsPerPageOptions={[10, 25, 100]}
+                    component="div"
+                    count={events.length}
+                    rowsPerPage={eventsPerPage}
+                    page={page}
+                    onChangePage={handleChangePage}
+                    onChangeEventPerPage={handleChangeEventsPerPage}
+                />
+            </Paper>
+        </div>
     );
 }
 

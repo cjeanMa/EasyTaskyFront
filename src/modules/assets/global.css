@@ -2,3 +2,79 @@ a{
     text-decoration: none;
     color: inherit;
 }
+
+.base {
+  margin:0;
+  padding:0;
+  font-family:"Lato",sans-serif;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  height:93vh;
+  background-image:url("https://images.pexels.com/photos/414144/pexels-photo-414144.jpeg?cs=srgb&dl=cold-dark-eerie-414144.jpg&fm=jpg");
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-position:center;
+  color:white;
+}
+
+.container {
+  position:absolute;
+  top:70%;
+  left:50%;
+  transform:translate(-50%, -50%)
+}
+
+.btn {
+    margin: 5px;
+  width:150px;
+  height:40px;
+  outline:none;
+  border:none;
+  text-transform:uppercase;
+  border-radius:6px;
+  cursor:pointer;
+  color:white;
+  background-size:200%;
+  font-family:"montserrat",sans-serif;
+  font-weight:700
+}
+
+.btn1 {
+  background-image:linear-gradient(to right, #12cbc4,#0652dd,#12cbc4);
+  margin-top:40px;
+}
+
+h1 {
+  font-size:100px;
+  margin:0;
+}
+
+h2 {
+  font-size:50px;
+  margin:0;
+}
+
+h3 {
+  opacity:0.7;
+  margin:0;
+  font-weight:100;
+}
+
+.btn:hover {
+  background-position:right;
+  transition:0.8s; 
+}
+
+@media (max-width:700px) {
+  h1 {
+    font-size:60px;
+  }
+  h2 {
+    font-size:35px;
+  }
+  h3 {
+    font-size:15px;
+  }
+}

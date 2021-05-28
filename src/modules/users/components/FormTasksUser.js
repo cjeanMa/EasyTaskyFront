@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react'
 import { Box, Button, Checkbox, FormControl, FormControlLabel, InputLabel, makeStyles, Select, TextField, Typography } from '@material-ui/core';
 import Grid from '@material-ui/core/Grid';
-import { addTaskByUser, getCategoryTasks } from '../../../services/TaskService';
+import { addTaskByUser, getCategoryTasks, updateTaskByUser } from '../../../services/TaskService';
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -15,44 +15,98 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-const FormTasksUser = ({ idUser }) => {
+const FormTasksUser = ({ ...props }) => {
   const classes = useStyles();
 
-  const [titleTask, setTitleTask] = React.useState("");
-  const [descriptionTask, setDescriptionTask] = React.useState("");
-  const [categoryTask, setCategoryTask] = React.useState("");
+  const [task, setTask] = React.useState({
+    action: props.action,
+    data: {
+      title_task: "",
+      description_task: "",
+      taskCategory: "",
+      id_user: props.idUser
+    }
+  });
   const [categoryTasks, setCategoryTasks] = React.useState([]);
 
   useEffect(() => {
     getCategoryTasks()
       .then(rpta => setCategoryTasks(rpta));
-    console.log("useEffect on action");
   }, [])
+
+  useEffect(() => {
+    if (props.action == "update") {
+      console.log("dataTask not empty");
+      setTask((prevTask) => ({
+        action: props.action,
+        data: {
+          ...props.dataTask
+        }
+      }))
+    }
+    else {
+      console.log("dataTask empty");
+      setTask(({
+        action: props.action,
+        data: {
+          title_task: "",
+          description_task: "",
+          taskCategory: "",
+          id_user: props.idUser
+        }
+      })
+      )
+    }
+  }, [props.dataTask, props.action])
 
   const handleSubmitTask = (e) => {
     e.preventDefault();
-    let data = {
-      "title_task": titleTask,
-      "description_task": descriptionTask,
-      "taskCategory": categoryTask,
-      "id_user": idUser
-    };
-    console.log(data);
-    addTaskByUser(data);
-    console.log(titleTask, " ", descriptionTask, " ", categoryTask, "//", categoryTasks);
+    switch (task.action) {
+      case "create":
+        console.log("estas intentando crear un nuevo task", task)
+        addTaskByUser(task.data)
+        .then(rpta => props.refreshData());
+        props.closeForm();
+        
+        break;
+    
+      case "update":
+        console.log("estas intentando updatear un task", task)
+        updateTaskByUser(task.data)
+        .then(rpta => props.refreshData());
+        props.closeForm();
+        break;
+    }
+
   }
 
   const handleInputTask = (e) => {
-    setTitleTask(e.target.value);
+    const { id, value } = e.target;
+    setTask((prevTask) => ({
+      ...prevTask,
+      data: {
+        ...prevTask.data,
+        [id]: value
+      }
+    }));
   }
 
-  const handleInputDescription = (e) => {
-    setDescriptionTask(e.target.value);
+  const closeForm = () => {
+    setTask({
+      action: props.action,
+      data: {
+        title_task: "",
+        description_task: "",
+        taskCategory: "",
+        id_user: props.idUser
+      }
+    })
+    props.closeForm();
   }
 
-  const handleChange = (e) => {
-    setCategoryTask(e.target.value);
-  };
+  const showData = () => {
+    console.log(task)
+  }
 
   return (
     <Box boxShadow={4} border={1} borderRadius={15} padding={2} marginBottom={2} borderColor="lightgray">
@@ -64,10 +118,10 @@ const FormTasksUser = ({ idUser }) => {
           <Grid item xs={12} sm={6}>
             <TextField
               required
-              id="titulo"
+              id="title_task"
               name="titulo"
               label="Titulo de Tarea"
-              value={titleTask}
+              value={task.data.title_task}
               fullWidth
               required
               onChange={handleInputTask}
@@ -76,13 +130,13 @@ const FormTasksUser = ({ idUser }) => {
           <Grid item xs={12} sm={6}>
             <TextField
               required
-              id="descripcion"
+              id="description_task"
               name="descripcion"
               label="Descripcion corta de Tarea"
-              value={descriptionTask}
+              value={task.data.description_task}
               fullWidth
               required
-              onChange={handleInputDescription}
+              onChange={handleInputTask}
             />
           </Grid>
           <Grid item xs={12} alignContent="center">
@@ -90,12 +144,13 @@ const FormTasksUser = ({ idUser }) => {
               <InputLabel htmlFor="filled-age-native-simple">Categoria</InputLabel>
               <Select
                 native
-                value={categoryTask}
-                onChange={handleChange}
+                id="taskCategory"
+                value={task.data.taskCategory}
+                onChange={handleInputTask}
                 required
               >
 
-                <option aria-label="None" value=""/>
+                <option aria-label="None" value="" />
                 {categoryTasks.map(catTas => {
                   return (<option value={catTas.id}>{catTas.title_task_category}</option>);
                 })}
@@ -104,8 +159,21 @@ const FormTasksUser = ({ idUser }) => {
             </FormControl>
           </Grid>
           <Grid item xs={12}>
-            <Button type="submit" variant="contained" color="primary">
-              Aceptar
+            <span disabled={props.action == "create" ? false : true} hidden={props.action == "create" ? false : true}>
+              <Button type="submit" variant="contained" color="primary">
+                Aceptar
+              </Button>
+            </span>
+            <span disabled={props.action == "update" ? false : true} hidden={props.action == "update" ? false : true}>
+              <Button type="submit" variant="contained" color="secondary">
+                Actualizar
+              </Button>
+            </span>
+            <Button margin={2} variant="contained" color="primary" onClick={closeForm}>
+              Cancelar
+          </Button>
+            <Button onClick={showData}>
+              Show me
           </Button>
           </Grid>
         </Grid>
