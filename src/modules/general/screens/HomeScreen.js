@@ -19,10 +19,10 @@ const HomeScreen = () => {
 
             <div className="container">
                 <Link to="/register" className={"btn btn1"}>
-                    <button class="btn btn1"> Registrate </button>
+                    <button className="btn btn1"> Registrate </button>
                 </Link>
                 <Link to="/login" className={"btn btn1"}>
-                    <button class="btn btn1"> Inicia Sesion </button>
+                    <button className="btn btn1"> Inicia Sesion </button>
                 </Link>
 
             </div>
